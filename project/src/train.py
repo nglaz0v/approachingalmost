@@ -4,6 +4,11 @@
 Creating a basic model.
 """
 
+import config
+
+import os
+import argparse
+
 import joblib
 import pandas as pd
 from sklearn import metrics
@@ -13,7 +18,7 @@ from sklearn import tree
 def run(fold):
     """Perform one run of the model."""
     # read the training data with folds
-    df = pd.read_csv("../input/mnist_train_folds.csv")
+    df = pd.read_csv(config.TRAINING_FILE)
 
     # training data is where kfold is not equal to provided fold
     # also, note that we reset the index
@@ -44,13 +49,27 @@ def run(fold):
     # calculate & print accuracy
     accuracy = metrics.accuracy_score(y_valid, preds)
     print(f"Fold={fold}, Accuracy={accuracy}")
+
     # save the model
-    joblib.dump(clf, f"../models/dt_{fold}.bin")
+    joblib.dump(
+        clf,
+        os.path.join(config.MODEL_OUTPUT, f"dt_{fold}.bin")
+    )
 
 
 if __name__ == "__main__":
-    run(fold=0)
-    run(fold=1)
-    run(fold=2)
-    run(fold=3)
-    run(fold=4)
+    # initialize ArgumentParser class of argparse
+    parser = argparse.ArgumentParser()
+
+    # add the different arguments you need and their type
+    # currently, we only need fold
+    parser.add_argument(
+        "--fold",
+        type=int
+    )
+
+    # read the arguments from the command line
+    args = parser.parse_args()
+
+    # run the fold specified by command line arguments
+    run(fold=args.fold)
