@@ -51,6 +51,8 @@ def run(fold: int, model: str) -> None:
     print(f"Fold={fold}, Accuracy={accuracy}")
 
     # save the model
+    if not os.path.exists(config.MODEL_OUTPUT):
+        os.mkdir(config.MODEL_OUTPUT)
     joblib.dump(
         clf,
         os.path.join(config.MODEL_OUTPUT, f"dt_{fold}.bin")
