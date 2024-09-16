@@ -14,7 +14,8 @@ from sklearn import preprocessing
 
 def feature_engineering(df, cat_cols):
     """
-    This function is used for feature engineering
+    Feature Engineering.
+
     :param df: the pandas dataframe with train/test data
     :param cat_cols: list of categorical columns
     :return: dataframe with new features
