@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-One-hot encoding all the data and using logistic regression.
+Label encoding all the data and using random forest.
 """
 
 import pandas as pd
 
-from sklearn import linear_model
+from sklearn import ensemble
 from sklearn import metrics
 from sklearn import preprocessing
 
@@ -27,30 +27,32 @@ def run(fold: int) -> None:
     for col in features:
         df.loc[:, col] = df[col].astype(str).fillna("NONE")
 
+    # now its time to label encode the features
+    for col in features:
+
+        # initialize LabelEncoder for each feature column
+        lbl = preprocessing.LabelEncoder()
+
+        # fit label encoder on all data
+        lbl.fit(df[col])
+
+        # transform all the data
+        df.loc[:, col] = lbl.transform(df[col])
+
     # get training data using folds
     df_train = df[df.kfold != fold].reset_index(drop=True)
 
     # get validation data using folds
     df_valid = df[df.kfold == fold].reset_index(drop=True)
 
-    # initialize OneHotEncoder from scikit-learn
-    ohe = preprocessing.OneHotEncoder()
+    # get training data
+    x_train = df_train[features].values
 
-    # fit ohe on training + validation features
-    full_data = pd.concat(
-        [df_train[features], df_valid[features]],
-        axis=0
-    )
-    ohe.fit(full_data[features])
+    # get validation data
+    x_valid = df_valid[features].values
 
-    # transform training data
-    x_train = ohe.transform(df_train[features])
-
-    # transform validation data
-    x_valid = ohe.transform(df_valid[features])
-
-    # initialize Logistic Regression model
-    model = linear_model.LogisticRegression()
+    # initialize random forest model
+    model = ensemble.RandomForestClassifier(n_jobs=-1)
 
     # fit model on training data (ohe)
     model.fit(x_train, df_train.target.values)
