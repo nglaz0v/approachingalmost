@@ -27,7 +27,7 @@ def run(fold: int) -> None:
     for col in features:
         df.loc[:, col] = df[col].astype(str).fillna("NONE")
 
-    # now its time to label encode the features
+    # now it's time to label encode the features
     for col in features:
 
         # initialize LabelEncoder for each feature column
