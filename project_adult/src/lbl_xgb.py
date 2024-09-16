@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-One-hot encoding all the data and using logistic regression.
+Label encoding all the data and using XGBoost.
 """
 
 import pandas as pd
 
-from sklearn import linear_model
+import xgboost as xgb
+
 from sklearn import metrics
 from sklearn import preprocessing
-
 
 def run(fold: int) -> None:
     """Perform one run of the model."""
@@ -35,15 +35,28 @@ def run(fold: int) -> None:
     }
     df["income"] = df.income.map(target_mapping)
 
-    # all columns are features except income and kfold columns
+    # all columns are features except kfold & income columns
     features = [
         f for f in df.columns if f not in ("kfold", "income")
     ]
+
     # fill all NaN values with NONE
     # note that I am converting all columns to "strings"
     # it doesn't matter because all are categories
     for col in features:
         df.loc[:, col] = df[col].astype(str).fillna("NONE")
+
+    # now it's time to label encode the features
+    for col in features:
+
+        # initialize LabelEncoder for each feature column
+        lbl = preprocessing.LabelEncoder()
+
+        # fit label encoder on all data
+        lbl.fit(df[col])
+
+        # transform all the data
+        df.loc[:, col] = lbl.transform(df[col])
 
     # get training data using folds
     df_train = df[df.kfold != fold].reset_index(drop=True)
@@ -51,24 +64,16 @@ def run(fold: int) -> None:
     # get validation data using folds
     df_valid = df[df.kfold == fold].reset_index(drop=True)
 
-    # initialize OneHotEncoder from scikit-learn
-    ohe = preprocessing.OneHotEncoder()
+    # get training data
+    x_train = df_train[features].values
 
-    # fit ohe on training + validation features
-    full_data = pd.concat(
-        [df_train[features], df_valid[features]],
-        axis=0
+    # get validation data
+    x_valid = df_valid[features].values
+
+    # initialize xgboost model
+    model = xgb.XGBClassifier(
+        n_jobs=-1
     )
-    ohe.fit(full_data[features])
-
-    # transform training data
-    x_train = ohe.transform(df_train[features])
-
-    # transform validation data
-    x_valid = ohe.transform(df_valid[features])
-
-    # initialize Logistic Regression model
-    model = linear_model.LogisticRegression()
 
     # fit model on training data (ohe)
     model.fit(x_train, df_train.income.values)
